@@ -1,65 +1,60 @@
-const express = require('express');
+const express = require("express");
+const mongoose = require("mongoose");
+const pug = require('pug');
+
+
 const app = express();
-const mongoose = require('mongoose');
+app.set('view engine', 'pug')
 
-app.get('/', function (req, res) {
-    conection();
-    if (req.query.name) {
-        
-        find(req.query.name,function (error, data) {
-            console.log(data);
-
-
-
-            // aqui update el valor con el nombre si existe en base de datos
-
-
-          });
-
-        
-    } else {
-        insert(formatObject("Anónimo", 1));
-    }
-    res.send('<h1>El visitante fue almacenado con éxito</h1>');
+mongoose.connect(process.env.MONGODB_URL || 'mongodb://localhost:27017/mongo-1', {
+    useNewUrlParser: true
 });
 
-function formatObject(name, count) {
-    return {
-        name: name,
-        count: count
+const VisitorSchema = new mongoose.Schema({
+    name: {
+        type: String
+    },
+    count: {
+        type: Number,
+        default: 0
     }
-}
+});
+const Visitor = mongoose.model("Visitor", VisitorSchema);
 
-function insert(myobj) {
-    var db = mongoose.connection;
-    db.collection("visitantes").insertOne(myobj, function (err, res) {
-        if (err) throw err;
-        console.log("1 document inserted");
-        db.close();
-    });
-}
+app.get("/", async (req, res) => {
 
-function find(personName, done) {
-    var db = mongoose.connection;
+    if (req.query.name) {
 
-        db.collection("visitantes").find({ name: personName }, function (err, data) {
-          if (err) {
-            done(err);
-          }
-          console.log(data)
-        done(null, data);
+        await Visitor.findOne({
+            name: req.query.name
+        }, async function (err, data) {
+            console.log(data);
+            if (data) {
+                data.count = data.count + 1;
+                await data.save(function (err) {
+                    if (err) {
+                        console.error('ERROR!');
+                    }
+                });
+            } else {
+                const visitor = new Visitor({
+                    name: req.query.name
+                });
+                await visitor.save()
+            }
         });
-};
+    } else {
+        const visitor = new Visitor({
+            name: "Anónimo"
+        });
+        await visitor.save()
+    }
 
-
-
-
-
-
-function conection() {
-    mongoose.connect(process.env.MONGODB_URL || 'mongodb://localhost:27017/mongo-1', {
-        useNewUrlParser: true
+    await Visitor.find({}, async function(err,data){
+        res.render('index', {visitors:data});
     });
-}
+    
 
-app.listen(3000, () => console.log('Listening on port 3000!'));
+});
+
+app.listen(3000, () => console.log("Listening on port 3000 ..."));
