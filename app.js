@@ -38,14 +38,16 @@ app.get("/", async (req, res) => {
                 });
             } else {
                 const visitor = new Visitor({
-                    name: req.query.name
+                    name: req.query.name,
+                    count: 1
                 });
                 await visitor.save()
             }
         });
     } else {
         const visitor = new Visitor({
-            name: "Anónimo"
+            name: "Anónimo",
+            count: 1
         });
         await visitor.save()
     }
