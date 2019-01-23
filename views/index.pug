@@ -9,15 +9,17 @@ html(lang="en")
     body
 
         table
-            tr
-                th Id
-                th Name
-                th Visits
-
-            each val in visitors
+            thead
                 tr
-                    td #{val._id}
-                    td #{val.name}
-                    td #{val.count}
+                    th Id
+                    th Name
+                    th Visits
+            
+            tbody
+                each val in visitors
+                    tr
+                        td #{val._id}
+                        td #{val.name}
+                        td #{val.count}
 
             
